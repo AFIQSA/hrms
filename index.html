@@ -128,15 +128,35 @@
     function setupDashboard() {
       const r = logged.role;
       const btns = document.getElementById('dashboard-buttons');
-      const shows = { attendance: true, leave: true, performance: true, 'payroll-upload': r==='HR', 'leave-approval': r==='HR', 'add-employee': r==='IT', 'payroll-view': r!=='HR' };
+      // define which tabs to show
+      const shows = {
+        attendance:      true,
+        leave:           true,
+        performance:     true,
+        'payroll-upload': r === 'HR',
+        'leave-approval': r === 'HR',
+        'add-employee':   r === 'IT',
+        'payroll-view':   r !== 'HR'
+      };
+      // clear old buttons
       btns.innerHTML = '';
-      Object.entries(shows).forEach(([id,ok]) => {
-        if(ok) btns.insertAdjacentHTML('beforeend', `<button onclick=\`showTab('${id}')\` class="bg-blue-700 text-white p-2 rounded">${id.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>`);
+      // create new buttons with event listeners
+      Object.entries(shows).forEach(([id, ok]) => {
+        if (!ok) return;
+        const btn = document.createElement('button');
+        btn.textContent = id
+          .split('-')
+          .map(w => w[0].toUpperCase() + w.slice(1))
+          .join(' ');
+        btn.className = 'bg-blue-700 text-white p-2 rounded hover:bg-blue-800';
+        btn.addEventListener('click', () => showTab(id));
+        btns.appendChild(btn);
       });
       // preload data
-      if(r==='HR') fetchLeaveRequests();
-      if(r!=='HR') fetchPayrollList();
-      if(r!=='HR') fetchPerformanceList();
+      if (r === 'HR') fetchLeaveRequests();
+      if (r !== 'HR') fetchPayrollList();
+      if (r !== 'HR') fetchPerformanceList();
+      // show default tab
       showTab('attendance');
     }
 
