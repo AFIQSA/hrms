@@ -1,4 +1,3 @@
-<!-- Full HTML + Tailwind + JS code with all corrections implemented -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +23,67 @@
     <h2 class="text-2xl font-semibold mb-4">Dashboard</h2>
     <div id="dashboard-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6"></div>
     <div id="section-container" class="space-y-6">
-      <!-- Sections added dynamically -->
+      <!-- Attendance -->
+      <div id="attendance-section" class="hidden p-4 border rounded bg-gray-50">
+        <h3 class="text-xl font-bold mb-2">Mark Attendance</h3>
+        <form id="attendanceForm" class="space-y-2">
+          <input name="employeeId" type="text" placeholder="Employee ID" class="w-full p-2 border rounded" required />
+          <select name="status" class="w-full p-2 border rounded">
+            <option value="Present">Present</option>
+            <option value="Absent">Absent</option>
+          </select>
+          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
+        </form>
+      </div>
+
+      <!-- Leave Request (with comment) -->
+      <div id="leave-section" class="hidden p-4 border rounded bg-gray-50">
+        <h3 class="text-xl font-bold mb-2">Leave Request</h3>
+        <form id="leaveForm" class="space-y-2">
+          <input name="employeeId" type="text" placeholder="Employee ID" class="w-full p-2 border rounded" required />
+          <input name="from" type="date" class="w-full p-2 border rounded" required />
+          <input name="to" type="date" class="w-full p-2 border rounded" required />
+          <textarea name="comment" placeholder="Leave Comment" class="w-full p-2 border rounded" required></textarea>
+          <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Submit</button>
+        </form>
+      </div>
+
+      <!-- Performance Review -->
+      <div id="performance-section" class="hidden p-4 border rounded bg-gray-50">
+        <h3 class="text-xl font-bold mb-2">Performance Review</h3>
+        <form id="reviewForm" class="space-y-2">
+          <input name="employeeId" type="text" placeholder="Employee ID" class="w-full p-2 border rounded" required />
+          <input name="rating" type="number" placeholder="Rating (1-5)" class="w-full p-2 border rounded" required />
+          <textarea name="feedback" placeholder="Feedback" class="w-full p-2 border rounded" required></textarea>
+          <button type="submit" class="bg-purple-500 text-white px-4 py-2 rounded">Submit</button>
+        </form>
+      </div>
+
+      <!-- Payroll Upload -->
+      <div id="payroll-upload-section" class="hidden p-4 border rounded bg-gray-50">
+        <h3 class="text-xl font-bold mb-2">Upload Payroll</h3>
+        <input name="employeeId" type="text" placeholder="Employee ID" class="w-full p-2 border rounded mb-2" required />
+        <input type="file" id="payrollFile" class="mb-2" accept="application/pdf" />
+        <button id="uploadBtn" class="bg-green-600 text-white px-4 py-2 rounded">Upload</button>
+      </div>
+
+      <!-- Add Employee -->
+      <div id="add-employee-section" class="hidden p-4 border rounded bg-gray-50">
+        <h3 class="text-xl font-bold mb-2">Add Employee</h3>
+        <form id="employeeForm" class="space-y-2">
+          <input name="employeeId" type="text" placeholder="Employee ID" class="w-full p-2 border rounded" required />
+          <input name="name" type="text" placeholder="Name" class="w-full p-2 border rounded" required />
+          <input name="email" type="email" placeholder="Email" class="w-full p-2 border rounded" required />
+          <input name="department" type="text" placeholder="Department" class="w-full p-2 border rounded" required />
+          <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Add</button>
+        </form>
+      </div>
+
+      <!-- Leave Approval -->
+      <div id="leave-approval-section" class="hidden p-4 border rounded bg-gray-50">
+        <h3 class="text-xl font-bold mb-2">Approve Leave</h3>
+        <button id="approveBtn" class="bg-red-600 text-white px-4 py-2 rounded">Approve Leave</button>
+      </div>
     </div>
   </div>
 
@@ -40,7 +99,6 @@
 
     const poolData = { UserPoolId: 'ap-south-1_FLoW0sfGn', ClientId: '4hl64f0ercj7ka7rr7epfjiioc' };
     const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
-    let loggedInUser = null;
 
     function login() {
       const email = document.getElementById('email').value;
@@ -52,9 +110,6 @@
         onSuccess: function (res) {
           const payload = res.getIdToken().decodePayload();
           const role = payload['custom:department'] || 'Other';
-          const employeeId = payload['custom:employeeId'] || payload['sub'];
-          loggedInUser = { role, employeeId };
-
           document.getElementById('login-section').classList.add('hidden');
           document.getElementById('dashboard').classList.remove('hidden');
           renderDashboard(role);
@@ -66,62 +121,18 @@
     }
 
     function renderDashboard(role) {
-      const buttons = document.getElementById('dashboard-buttons');
-      const container = document.getElementById('section-container');
-      buttons.innerHTML = '';
-      container.innerHTML = '';
-
-      function addSection(id, label, html) {
-        buttons.innerHTML += `<button onclick="showTab('${id}')" class="bg-blue-700 text-white p-2 rounded">${label}</button>`;
-        container.innerHTML += `<div id="${id}-section" class="hidden p-4 border rounded bg-gray-50">${html}</div>`;
-      }
-
-      // Common sections
-      addSection('attendance', 'Attendance', `
-        <h3 class='text-xl font-bold mb-2'>Mark Attendance</h3>
-        <form id='attendanceForm' class='space-y-2'>
-          <input name='status' type='text' placeholder='Status' class='w-full p-2 border rounded' required />
-          <button class='bg-blue-600 text-white px-4 py-2 rounded'>Submit</button>
-        </form>`);
-
-      addSection('leave', 'Leave Request', `
-        <h3 class='text-xl font-bold mb-2'>Leave Request</h3>
-        <form id='leaveForm' class='space-y-2'>
-          <input name='from' type='date' class='w-full p-2 border rounded' required />
-          <input name='to' type='date' class='w-full p-2 border rounded' required />
-          <textarea name='comment' placeholder='Comment' class='w-full p-2 border rounded' required></textarea>
-          <button class='bg-yellow-500 text-white px-4 py-2 rounded'>Submit</button>
-        </form>`);
-
-      addSection('performance', 'Performance Review', `
-        <h3 class='text-xl font-bold mb-2'>Performance Review</h3>
-        <form id='reviewForm' class='space-y-2'>
-          <input name='rating' type='number' placeholder='Rating (1-5)' class='w-full p-2 border rounded' required />
-          <textarea name='feedback' placeholder='Feedback' class='w-full p-2 border rounded' required></textarea>
-          <button class='bg-purple-500 text-white px-4 py-2 rounded'>Submit</button>
-        </form>`);
-
+      const btns = document.getElementById('dashboard-buttons');
+      btns.innerHTML = '';
+      const sections = ['attendance', 'leave', 'performance'];
+      sections.forEach(id => {
+        btns.innerHTML += `<button onclick="showTab('${id}')" class="bg-blue-700 text-white p-2 rounded">${id.charAt(0).toUpperCase()+id.slice(1)}</button>`;
+        document.getElementById(`${id}-section`).classList.remove('hidden');
+      });
       if (role === 'HR') {
-        addSection('payroll-upload', 'Upload Payroll', `
-          <input type='file' id='payrollFile' class='mb-2' accept='application/pdf' />
-          <button id='uploadBtn' class='bg-green-600 text-white px-4 py-2 rounded'>Upload</button>`);
-
-        addSection('leave-approval', 'Approve Leave', `
-          <div id='leaveRequestsList'></div>`);
-
-        // Load leave requests from others
-        fetchLeaveRequests();
-      }
-
-      if (role === 'IT') {
-        addSection('add-employee', 'Add Employee', `
-          <form id='employeeForm' class='space-y-2'>
-            <input name='employeeId' placeholder='Employee ID' class='w-full p-2 border rounded' required />
-            <input name='name' placeholder='Name' class='w-full p-2 border rounded' required />
-            <input name='email' placeholder='Email' class='w-full p-2 border rounded' required />
-            <input name='department' placeholder='Department' class='w-full p-2 border rounded' required />
-            <button class='bg-indigo-600 text-white px-4 py-2 rounded'>Add</button>
-          </form>`);
+        btns.innerHTML += `<button onclick="showTab('payroll-upload')" class="bg-blue-700 text-white p-2 rounded">Upload Payroll</button>`;
+        btns.innerHTML += `<button onclick="showTab('leave-approval')" class="bg-blue-700 text-white p-2 rounded">Approve Leave</button>`;
+      } else if (role === 'IT') {
+        btns.innerHTML += `<button onclick="showTab('add-employee')" class="bg-blue-700 text-white p-2 rounded">Add Employee</button>`;
       }
     }
 
@@ -130,69 +141,49 @@
       document.getElementById(`${id}-section`).classList.remove('hidden');
     }
 
-    async function fetchLeaveRequests() {
-      const res = await fetch(endpoints.requestLeave);
-      const data = await res.json();
-      const list = document.getElementById('leaveRequestsList');
-      list.innerHTML = data.map(item => `
-        <div class='p-2 border rounded mb-2'>
-          <p><b>Employee:</b> ${item.employeeId}</p>
-          <p><b>From:</b> ${item.from} to ${item.to}</p>
-          <p><b>Comment:</b> ${item.comment}</p>
-          <button onclick="approve('${item.leaveId}', '${item.employeeId}')" class='bg-red-600 text-white px-3 py-1 mt-2 rounded'>Approve</button>
-        </div>`).join('');
+    // Utility to handle JSON alerts
+    function alertJSON(res) {
+      res.json().then(data => alert(typeof data==='object'?JSON.stringify(data):data));
     }
 
-    function approve(leaveId, employeeId) {
-      fetch(endpoints.approveLeave, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leaveId, employeeId })
-      }).then(r => r.json()).then(alert).catch(alert);
-    }
-
-    document.addEventListener('submit', async e => {
-      e.preventDefault();
-      const f = e.target;
-      const id = f.id;
-      if (!id) return;
-
-      const values = Object.fromEntries(new FormData(f).entries());
-      values.employeeId = loggedInUser.employeeId;
-
-      if (id === 'leaveForm') values.leaveId = Date.now().toString();
-
-      const endpointMap = {
-        attendanceForm: endpoints.markAttendance,
-        leaveForm: endpoints.requestLeave,
-        reviewForm: endpoints.submitReview,
-        employeeForm: endpoints.createEmployee
-      };
-
-      const url = endpointMap[id];
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values)
-      });
-      const result = await res.json();
-      alert(typeof result === 'object' ? JSON.stringify(result) : result);
-      f.reset();
+    document.getElementById('employeeForm')?.addEventListener('submit', async e => {
+      e.preventDefault(); const f=e.target;
+      fetch(endpoints.createEmployee,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employeeId:f.employeeId.value,name:f.name.value,email:f.email.value,department:f.department.value})})
+        .then(alertJSON).catch(err=>alert(err.message));f.reset();
     });
 
-    document.addEventListener('click', async e => {
-      if (e.target.id === 'uploadBtn') {
-        const file = document.getElementById('payrollFile').files[0];
-        if (!file) return alert('Choose PDF');
-        const res = await fetch(endpoints.uploadPayroll, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ employeeId: loggedInUser.employeeId, fileName: file.name })
-        });
-        const data = await res.json();
-        await fetch(data.uploadUrl, { method: 'PUT', body: file });
-        alert('Uploaded');
-      }
+    document.getElementById('attendanceForm')?.addEventListener('submit', async e => {
+      e.preventDefault(); const f=e.target;
+      fetch(endpoints.markAttendance,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employeeId:f.employeeId.value,status:f.status.value})})
+        .then(alertJSON).catch(err=>alert(err.message));f.reset();
+    });
+
+    document.getElementById('leaveForm')?.addEventListener('submit', async e => {
+      e.preventDefault(); const f=e.target;
+      fetch(endpoints.requestLeave,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leaveId:Date.now().toString(),employeeId:f.employeeId.value,from:f.from.value,to:f.to.value,comment:f.comment.value})})
+        .then(alertJSON).catch(err=>alert(err.message));f.reset();
+    });
+
+    document.getElementById('reviewForm')?.addEventListener('submit', async e => {
+      e.preventDefault(); const f=e.target;
+      fetch(endpoints.submitReview,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employeeId:f.employeeId.value,rating:f.rating.value,feedback:f.feedback.value})})
+        .then(alertJSON).catch(err=>alert(err.message));f.reset();
+    });
+
+    document.getElementById('approveBtn')?.addEventListener('click', async ()=>{
+      fetch(endpoints.approveLeave,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leaveId:prompt('Leave ID'),employeeId:prompt('Employee ID')})})
+        .then(alertJSON).catch(err=>alert(err.message));
+    });
+
+    document.getElementById('uploadBtn')?.addEventListener('click', async ()=>{
+      const section=document.getElementById('payroll-upload-section');
+      const emp=section.querySelector('input[name="employeeId"]').value;
+      const file=document.getElementById('payrollFile').files[0];
+      if(!file||!emp) return alert('Employee ID and file required');
+      const res=await fetch(endpoints.uploadPayroll,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employeeId:emp,fileName:file.name})});
+      const data=await res.json();
+      await fetch(data.uploadUrl,{method:'PUT',body:file});
+      alert('Upload Successful');
     });
   </script>
 </body>
