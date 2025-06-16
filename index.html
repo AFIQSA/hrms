@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>HRMS Dashboard</title>
+  <title>HRMS Dashboard</n  >
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.2.0/dist/amazon-cognito-identity.min.js"></script>
 </head>
@@ -23,7 +23,6 @@
     <h2 class="text-2xl font-semibold mb-4">Dashboard</h2>
     <div id="dashboard-buttons" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
     <div id="section-container" class="space-y-6">
-
       <!-- Attendance -->
       <div id="attendance-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Mark Attendance</h3>
@@ -36,7 +35,6 @@
           <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
         </form>
       </div>
-
       <!-- Leave Request -->
       <div id="leave-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Leave Request</h3>
@@ -48,13 +46,11 @@
           <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Submit</button>
         </form>
       </div>
-
       <!-- Performance Review -->
       <div id="performance-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Performance Review</h3>
         <div id="performance-content"></div>
       </div>
-
       <!-- Payroll Upload (HR) -->
       <div id="payroll-upload-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Upload Payroll</h3>
@@ -62,13 +58,11 @@
         <input type="file" id="payrollFile" class="mb-2" accept="application/pdf" />
         <button id="uploadBtn" class="bg-green-600 text-white px-4 py-2 rounded">Upload</button>
       </div>
-
       <!-- Payroll View (IT & Other) -->
       <div id="payroll-view-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Your Payroll</h3>
         <div id="payroll-links"></div>
       </div>
-
       <!-- Add Employee (IT) -->
       <div id="add-employee-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Add Employee</h3>
@@ -80,21 +74,19 @@
           <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Add</button>
         </form>
       </div>
-
       <!-- Leave Approval (HR) -->
       <div id="leave-approval-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Approve Leave</h3>
         <input id="searchEmployee" type="text" placeholder="Search by Employee ID" class="w-full p-2 border rounded mb-2" />
         <div id="leaveRequestsList"></div>
       </div>
-
     </div>
   </div>
 
   <script>
     const endpoints = {
       createEmployee:   'https://xbbkb34yqg.execute-api.ap-south-1.amazonaws.com/prod/createEmployee',
-      requestLeave:     'https://19w34eu7a8.execute-api.ap-south-1.amazonaws.com/prod/LeaveRequests',
+      requestLeave:     'https://1gva377wib.execute-api.ap-south-1.amazonaws.com/prod/requestLeave',
       listLeave:        'https://bssewasly2.execute-api.ap-south-1.amazonaws.com/prod/listLeave',
       markAttendance:   'https://lrjpznrtw8.execute-api.ap-south-1.amazonaws.com/prod/markAttendance',
       submitReview:     'https://9ejo003uv8.execute-api.ap-south-1.amazonaws.com/prod/submitReview',
@@ -103,16 +95,15 @@
       uploadPayroll:    'https://3fr5e5em4e.execute-api.ap-south-1.amazonaws.com/prod/uploadPayroll',
       listPayroll:      'https://gqrjwev6yc.execute-api.ap-south-1.amazonaws.com/prod/listPayroll'
     };
-
     const poolData = { UserPoolId: 'ap-south-1_FLoW0sfGn', ClientId: '4hl64f0ercj7ka7rr7epfjiioc' };
     const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
     let logged;
 
     function login() {
       const email = document.getElementById('email').value;
-      const pass = document.getElementById('password').value;
-      const auth = new AmazonCognitoIdentity.AuthenticationDetails({ Username: email, Password: pass });
-      const user = new AmazonCognitoIdentity.CognitoUser({ Username: email, Pool: userPool });
+      const pass  = document.getElementById('password').value;
+      const auth  = new AmazonCognitoIdentity.AuthenticationDetails({ Username: email, Password: pass });
+      const user  = new AmazonCognitoIdentity.CognitoUser({ Username: email, Pool: userPool });
       user.authenticateUser(auth, {
         onSuccess: res => {
           const p = res.getIdToken().decodePayload();
@@ -128,35 +119,19 @@
     function setupDashboard() {
       const r = logged.role;
       const btns = document.getElementById('dashboard-buttons');
-      // define which tabs to show
-      const shows = {
-        attendance:      true,
-        leave:           true,
-        performance:     true,
-        'payroll-upload': r === 'HR',
-        'leave-approval': r === 'HR',
-        'add-employee':   r === 'IT',
-        'payroll-view':   r !== 'HR'
-      };
-      // clear old buttons
+      const shows = { attendance: true, leave: true, performance: true, 'payroll-upload': r==='HR', 'leave-approval': r==='HR', 'add-employee': r==='IT', 'payroll-view': r!=='HR' };
       btns.innerHTML = '';
-      // create new buttons with event listeners
-      Object.entries(shows).forEach(([id, ok]) => {
-        if (!ok) return;
+      Object.entries(shows).forEach(([id,ok]) => {
+        if(!ok) return;
         const btn = document.createElement('button');
-        btn.textContent = id
-          .split('-')
-          .map(w => w[0].toUpperCase() + w.slice(1))
-          .join(' ');
+        btn.textContent = id.split('-').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');
         btn.className = 'bg-blue-700 text-white p-2 rounded hover:bg-blue-800';
-        btn.addEventListener('click', () => showTab(id));
+        btn.addEventListener('click', ()=> showTab(id));
         btns.appendChild(btn);
       });
-      // preload data
-      if (r === 'HR') fetchLeaveRequests();
-      if (r !== 'HR') fetchPayrollList();
-      if (r !== 'HR') fetchPerformanceList();
-      // show default tab
+      if(r==='HR') fetchLeaveRequests();
+      if(r!=='HR') fetchPayrollList();
+      if(r!=='HR') fetchPerformanceList();
       showTab('attendance');
     }
 
@@ -166,29 +141,25 @@
     }
 
     async function postJSON(url, body) {
-      const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-      return r.json();
+      const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      return await res.json();
     }
 
-    // Handlers
+    // Form handlers
     document.getElementById('attendanceForm')?.addEventListener('submit', async e=>{
       e.preventDefault(); const f=e.target;
-      alert(JSON.stringify(await postJSON(endpoints.markAttendance,{employeeId:f.employeeId.value,status:f.status.value})));
-      f.reset();
+      alert(JSON.stringify(await postJSON(endpoints.markAttendance,{ employeeId:f.employeeId.value, status:f.status.value }))); f.reset();
     });
-
     document.getElementById('leaveForm')?.addEventListener('submit', async e=>{
       e.preventDefault(); const f=e.target;
-      alert(JSON.stringify(await postJSON(endpoints.requestLeave,{leaveId:Date.now().toString(),employeeId:f.employeeId.value,from:f.from.value,to:f.to.value,comment:f.comment.value})));
-      f.reset();
+      alert(JSON.stringify(await postJSON(endpoints.requestLeave,{ leaveId:Date.now().toString(), employeeId:f.employeeId.value, from: f.from.value, to: f.to.value, comment: f.comment.value }))); f.reset();
     });
 
-    // Performance: HR sees form, others see list
+    // Performance section
     function renderPerformanceSection() {
       const cnt = document.getElementById('performance-content');
       if(logged.role==='HR') {
-        cnt.innerHTML = `
-          <form id='reviewForm' class='space-y-2'>
+        cnt.innerHTML = `<form id='reviewForm' class='space-y-2'>
             <input name='employeeId' type='text' placeholder='Employee ID' class='w-full p-2 border rounded' required />
             <input name='rating' type='number' placeholder='Rating (1-5)' class='w-full p-2 border rounded' required />
             <textarea name='feedback' placeholder='Feedback' class='w-full p-2 border rounded' required></textarea>
@@ -196,58 +167,58 @@
           </form>`;
         document.getElementById('reviewForm').addEventListener('submit', async ev=>{
           ev.preventDefault(); const f=ev.target;
-          alert(JSON.stringify(await postJSON(endpoints.submitReview,{reviewId:Date.now().toString(),employeeId:f.employeeId.value,rating:f.rating.value,feedback:f.feedback.value}))); f.reset();
+          alert(JSON.stringify(await postJSON(endpoints.submitReview,{ reviewId:Date.now().toString(), employeeId:f.employeeId.value, rating:f.rating.value, feedback:f.feedback.value }))); f.reset();
         });
-      } else {
-        fetchPerformanceList();
-      }
+      } else fetchPerformanceList();
     }
 
-    document.getElementById('employeeForm')?.addEventListener('submit', async e=>{ e.preventDefault(); const f=e.target;
-      alert(JSON.stringify(await postJSON(endpoints.createEmployee,{employeeId:f.employeeId.value,name:f.name.value,email:f.email.value,department:f.department.value}))); f.reset();
+    document.getElementById('employeeForm')?.addEventListener('submit', async e=>{
+      e.preventDefault(); const f=e.target;
+      alert(JSON.stringify(await postJSON(endpoints.createEmployee,{ employeeId:f.employeeId.value, name:f.name.value, email:f.email.value, department:f.department.value }))); f.reset();
     });
 
     document.getElementById('approveBtn')?.addEventListener('click', async ()=>{
       const eid=prompt('Employee ID'), lid=prompt('Leave ID');
-      alert(JSON.stringify(await postJSON(endpoints.approveLeave,{employeeId:eid,leaveId:lid}))); 
+      alert(JSON.stringify(await postJSON(endpoints.approveLeave,{ employeeId:eid, leaveId:lid }))); 
     });
 
     document.getElementById('uploadBtn')?.addEventListener('click', async ()=>{
-      const sec=document.getElementById('payroll-upload-section'); const emp=sec.querySelector('input[name="employeeId"]').value;
+      const sec=document.getElementById('payroll-upload-section');
+      const emp=sec.querySelector('input[name="employeeId"]').value;
       const file=document.getElementById('payrollFile').files[0]; if(!emp||!file) return alert('Employee ID and file required');
-      const up=await postJSON(endpoints.uploadPayroll,{employeeId:emp,fileName:file.name});
-      await fetch(up.uploadUrl,{method:'PUT',body:file}); alert('Upload Successful');
+      const up=await postJSON(endpoints.uploadPayroll,{ employeeId:emp, fileName:file.name });
+      await fetch(up.uploadUrl,{ method:'PUT', body:file }); alert('Upload Successful');
     });
 
-    // Load lists
-    async function fetchLeaveRequests(){
-      const list=document.getElementById('leaveRequestsList');
-      try{
-        const arr = await postJSON(endpoints.listLeave,{});
+    // List fetches
+    async function fetchLeaveRequests() {
+      const list = document.getElementById('leaveRequestsList');
+      try {
+        const arr = await postJSON(endpoints.listLeave, {});
         list.innerHTML = arr.map(x=>`<div class="p-2 border mb-2"><p><b>${x.employeeId}</b>: ${x.comment}</p><button onclick="approve('${x.employeeId}','${x.leaveId}')" class="bg-red-500 text-white px-2 py-1 rounded">Approve</button></div>`).join('');
-      } catch{ list.innerText='Error loading leave requests'; }
+      } catch { list.innerText='Error loading leave requests'; }
     }
-    async function fetchPayrollList(){
-      const div=document.getElementById('payroll-links');
-      try{
-        const arr = await postJSON(endpoints.listPayroll,{employeeId:logged.emp});
+    async function fetchPayrollList() {
+      const div = document.getElementById('payroll-links');
+      try {
+        const arr = await postJSON(endpoints.listPayroll, { employeeId: logged.emp });
         div.innerHTML = arr.map(x=>`<a href="${x.downloadUrl}" target="_blank" class="block underline text-blue-600">${x.fileName}</a>`).join('');
-      } catch{ div.innerText='Error loading payroll'; }
+      } catch { div.innerText='Error loading payroll'; }
     }
-    async function fetchPerformanceList(){
-      const cnt=document.getElementById('performance-content');
-      if(logged.role!=='HR'){
-        try{
-          const arr=await postJSON(endpoints.listReview,{employeeId:logged.emp});
-          cnt.innerHTML = arr.map(r=>`<p>${r.rating} / 5 — ${r.feedback}</p>`).join('');
-        } catch{ cnt.innerText='Error loading performance'; }
-      }
+    async function fetchPerformanceList() {
+      const cnt = document.getElementById('performance-content');
+      try {
+        const arr = await postJSON(endpoints.listReview, { employeeId: logged.emp });
+        cnt.innerHTML = arr.map(r=>`<p>${r.rating} / 5 — ${r.feedback}</p>`).join('');
+      } catch { cnt.innerText='Error loading performance'; }
     }
-    function approve(emp,lid){ postJSON(endpoints.approveLeave,{employeeId:emp,leaveId:lid}).then(r=>alert(JSON.stringify(r))); }
+    function approve(emp, lid) {
+      postJSON(endpoints.approveLeave, { employeeId: emp, leaveId: lid }).then(r=>alert(JSON.stringify(r)));
+    }
 
-    // Initialize performance section on dashboard setup
-    const originalSetup = setupDashboard;
-    setupDashboard = () => { originalSetup(); renderPerformanceSection(); };
+    // Wrap performance into dashboard init
+    const orig = setupDashboard;
+    setupDashboard = () => { orig(); renderPerformanceSection(); };
   </script>
 </body>
 </html>
