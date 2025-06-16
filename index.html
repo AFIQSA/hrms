@@ -23,6 +23,7 @@
     <h2 class="text-2xl font-semibold mb-4">Dashboard</h2>
     <div id="dashboard-buttons" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
     <div id="section-container" class="space-y-6">
+
       <!-- Attendance -->
       <div id="attendance-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Mark Attendance</h3>
@@ -91,7 +92,6 @@
   </div>
 
   <script>
-    // API endpoints
     const endpoints = {
       createEmployee:   'https://xbbkb34yqg.execute-api.ap-south-1.amazonaws.com/prod/createEmployee',
       requestLeave:     'https://19w34eu7a8.execute-api.ap-south-1.amazonaws.com/prod/LeaveRequests',
@@ -114,14 +114,14 @@
       const auth = new AmazonCognitoIdentity.AuthenticationDetails({ Username: email, Password: pass });
       const user = new AmazonCognitoIdentity.CognitoUser({ Username: email, Pool: userPool });
       user.authenticateUser(auth, {
-        onSuccess: (res) => {
+        onSuccess: res => {
           const p = res.getIdToken().decodePayload();
           logged = { role: p['custom:department']||'Other', emp: p['sub'] };
           document.getElementById('login-section').classList.add('hidden');
           document.getElementById('dashboard').classList.remove('hidden');
           setupDashboard();
         },
-        onFailure: (e) => document.getElementById('login-error').innerText = e.message
+        onFailure: e => document.getElementById('login-error').innerText = e.message
       });
     }
 
@@ -130,7 +130,10 @@
       const btns = document.getElementById('dashboard-buttons');
       const shows = { attendance: true, leave: true, performance: true, 'payroll-upload': r==='HR', 'leave-approval': r==='HR', 'add-employee': r==='IT', 'payroll-view': r!=='HR' };
       btns.innerHTML = '';
-      Object.entries(shows).forEach(([id,ok]) => { if(ok) btns.insertAdjacentHTML('beforeend', `<button onclick="showTab('${id}')" class="bg-blue-700 text-white p-2 rounded">${id.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>`); });
+      Object.entries(shows).forEach(([id,ok]) => {
+        if(ok) btns.insertAdjacentHTML('beforeend', `<button onclick=\`showTab('${id}')\` class="bg-blue-700 text-white p-2 rounded">${id.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</button>`);
+      });
+      // preload data
       if(r==='HR') fetchLeaveRequests();
       if(r!=='HR') fetchPayrollList();
       if(r!=='HR') fetchPerformanceList();
@@ -148,54 +151,83 @@
     }
 
     // Handlers
-    document.getElementById('attendanceForm')?.addEventListener('submit', async e=>{ e.preventDefault(); const f=e.target;
-      alert(JSON.stringify(await postJSON(endpoints.markAttendance,{employeeId:f.employeeId.value,status:f.status.value}))); f.reset();
+    document.getElementById('attendanceForm')?.addEventListener('submit', async e=>{
+      e.preventDefault(); const f=e.target;
+      alert(JSON.stringify(await postJSON(endpoints.markAttendance,{employeeId:f.employeeId.value,status:f.status.value})));
+      f.reset();
     });
 
-    document.getElementById('leaveForm')?.addEventListener('submit', async e=>{ e.preventDefault(); const f=e.target;
-      alert(JSON.stringify(await postJSON(endpoints.requestLeave,{leaveId:Date.now().toString(),employeeId:f.employeeId.value,from:f.from.value,to:f.to.value,comment:f.comment.value}))); f.reset();
+    document.getElementById('leaveForm')?.addEventListener('submit', async e=>{
+      e.preventDefault(); const f=e.target;
+      alert(JSON.stringify(await postJSON(endpoints.requestLeave,{leaveId:Date.now().toString(),employeeId:f.employeeId.value,from:f.from.value,to:f.to.value,comment:f.comment.value})));
+      f.reset();
     });
 
-    document.getElementById('reviewForm')?.addEventListener('submit', async e=>{ e.preventDefault(); const f=e.target;
-      alert(JSON.stringify(await postJSON(endpoints.submitReview,{reviewId:Date.now().toString(),employeeId:f.employeeId.value,rating:f.rating.value,feedback:f.feedback.value}))); f.reset();
-    });
+    // Performance: HR sees form, others see list
+    function renderPerformanceSection() {
+      const cnt = document.getElementById('performance-content');
+      if(logged.role==='HR') {
+        cnt.innerHTML = `
+          <form id='reviewForm' class='space-y-2'>
+            <input name='employeeId' type='text' placeholder='Employee ID' class='w-full p-2 border rounded' required />
+            <input name='rating' type='number' placeholder='Rating (1-5)' class='w-full p-2 border rounded' required />
+            <textarea name='feedback' placeholder='Feedback' class='w-full p-2 border rounded' required></textarea>
+            <button class='bg-purple-500 text-white px-4 py-2 rounded'>Submit</button>
+          </form>`;
+        document.getElementById('reviewForm').addEventListener('submit', async ev=>{
+          ev.preventDefault(); const f=ev.target;
+          alert(JSON.stringify(await postJSON(endpoints.submitReview,{reviewId:Date.now().toString(),employeeId:f.employeeId.value,rating:f.rating.value,feedback:f.feedback.value}))); f.reset();
+        });
+      } else {
+        fetchPerformanceList();
+      }
+    }
 
     document.getElementById('employeeForm')?.addEventListener('submit', async e=>{ e.preventDefault(); const f=e.target;
       alert(JSON.stringify(await postJSON(endpoints.createEmployee,{employeeId:f.employeeId.value,name:f.name.value,email:f.email.value,department:f.department.value}))); f.reset();
     });
 
     document.getElementById('approveBtn')?.addEventListener('click', async ()=>{
-      const eid=prompt('Employee ID'); const lid=prompt('Leave ID');
+      const eid=prompt('Employee ID'), lid=prompt('Leave ID');
       alert(JSON.stringify(await postJSON(endpoints.approveLeave,{employeeId:eid,leaveId:lid}))); 
     });
 
     document.getElementById('uploadBtn')?.addEventListener('click', async ()=>{
-      const sec=document.getElementById('payroll-upload-section'); const emp=sec.querySelector('input[name="employeeId"]').value; const file=document.getElementById('payrollFile').files[0];
-      if(!emp||!file) return alert('Employee ID and file required');
-      const up = await postJSON(endpoints.uploadPayroll,{employeeId:emp,fileName:file.name});
+      const sec=document.getElementById('payroll-upload-section'); const emp=sec.querySelector('input[name="employeeId"]').value;
+      const file=document.getElementById('payrollFile').files[0]; if(!emp||!file) return alert('Employee ID and file required');
+      const up=await postJSON(endpoints.uploadPayroll,{employeeId:emp,fileName:file.name});
       await fetch(up.uploadUrl,{method:'PUT',body:file}); alert('Upload Successful');
     });
 
     // Load lists
     async function fetchLeaveRequests(){
-      const list=document.getElementById('leaveRequestsList'); try{
+      const list=document.getElementById('leaveRequestsList');
+      try{
         const arr = await postJSON(endpoints.listLeave,{});
         list.innerHTML = arr.map(x=>`<div class="p-2 border mb-2"><p><b>${x.employeeId}</b>: ${x.comment}</p><button onclick="approve('${x.employeeId}','${x.leaveId}')" class="bg-red-500 text-white px-2 py-1 rounded">Approve</button></div>`).join('');
-      }catch{ list.innerText='Error loading leave requests'; }
+      } catch{ list.innerText='Error loading leave requests'; }
     }
     async function fetchPayrollList(){
-      const div=document.getElementById('payroll-links'); try{
+      const div=document.getElementById('payroll-links');
+      try{
         const arr = await postJSON(endpoints.listPayroll,{employeeId:logged.emp});
         div.innerHTML = arr.map(x=>`<a href="${x.downloadUrl}" target="_blank" class="block underline text-blue-600">${x.fileName}</a>`).join('');
-      }catch{ div.innerText='Error loading payroll'; }
+      } catch{ div.innerText='Error loading payroll'; }
     }
     async function fetchPerformanceList(){
-      const cnt=document.getElementById('performance-content'); try{
-        const arr = await postJSON(endpoints.listReview,{employeeId:logged.emp});
-        cnt.innerHTML = arr.map(r=>`<p>${r.rating} / 5 — ${r.feedback}</p>`).join('');
-      }catch{ cnt.innerText='Error loading performance'; }
+      const cnt=document.getElementById('performance-content');
+      if(logged.role!=='HR'){
+        try{
+          const arr=await postJSON(endpoints.listReview,{employeeId:logged.emp});
+          cnt.innerHTML = arr.map(r=>`<p>${r.rating} / 5 — ${r.feedback}</p>`).join('');
+        } catch{ cnt.innerText='Error loading performance'; }
+      }
     }
     function approve(emp,lid){ postJSON(endpoints.approveLeave,{employeeId:emp,leaveId:lid}).then(r=>alert(JSON.stringify(r))); }
+
+    // Initialize performance section on dashboard setup
+    const originalSetup = setupDashboard;
+    setupDashboard = () => { originalSetup(); renderPerformanceSection(); };
   </script>
 </body>
 </html>
