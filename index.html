@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>HRMS Dashboard</n  >
+  <title>HRMS Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.2.0/dist/amazon-cognito-identity.min.js"></script>
 </head>
@@ -23,6 +23,7 @@
     <h2 class="text-2xl font-semibold mb-4">Dashboard</h2>
     <div id="dashboard-buttons" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
     <div id="section-container" class="space-y-6">
+
       <!-- Attendance -->
       <div id="attendance-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Mark Attendance</h3>
@@ -35,6 +36,7 @@
           <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
         </form>
       </div>
+
       <!-- Leave Request -->
       <div id="leave-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Leave Request</h3>
@@ -46,11 +48,13 @@
           <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Submit</button>
         </form>
       </div>
+
       <!-- Performance Review -->
       <div id="performance-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Performance Review</h3>
         <div id="performance-content"></div>
       </div>
+
       <!-- Payroll Upload (HR) -->
       <div id="payroll-upload-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Upload Payroll</h3>
@@ -58,11 +62,13 @@
         <input type="file" id="payrollFile" class="mb-2" accept="application/pdf" />
         <button id="uploadBtn" class="bg-green-600 text-white px-4 py-2 rounded">Upload</button>
       </div>
+
       <!-- Payroll View (IT & Other) -->
       <div id="payroll-view-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Your Payroll</h3>
         <div id="payroll-links"></div>
       </div>
+
       <!-- Add Employee (IT) -->
       <div id="add-employee-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Add Employee</h3>
@@ -74,19 +80,21 @@
           <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Add</button>
         </form>
       </div>
+
       <!-- Leave Approval (HR) -->
       <div id="leave-approval-section" class="hidden p-4 border rounded bg-gray-50">
         <h3 class="text-xl font-bold mb-2">Approve Leave</h3>
         <input id="searchEmployee" type="text" placeholder="Search by Employee ID" class="w-full p-2 border rounded mb-2" />
         <div id="leaveRequestsList"></div>
       </div>
+
     </div>
   </div>
 
   <script>
     const endpoints = {
       createEmployee:   'https://xbbkb34yqg.execute-api.ap-south-1.amazonaws.com/prod/createEmployee',
-      requestLeave:     'https://1gva377wib.execute-api.ap-south-1.amazonaws.com/prod/requestLeave',
+      requestLeave:     'https://19w34eu7a8.execute-api.ap-south-1.amazonaws.com/prod/LeaveRequests',
       listLeave:        'https://bssewasly2.execute-api.ap-south-1.amazonaws.com/prod/listLeave',
       markAttendance:   'https://lrjpznrtw8.execute-api.ap-south-1.amazonaws.com/prod/markAttendance',
       submitReview:     'https://9ejo003uv8.execute-api.ap-south-1.amazonaws.com/prod/submitReview',
@@ -95,6 +103,7 @@
       uploadPayroll:    'https://3fr5e5em4e.execute-api.ap-south-1.amazonaws.com/prod/uploadPayroll',
       listPayroll:      'https://gqrjwev6yc.execute-api.ap-south-1.amazonaws.com/prod/listPayroll'
     };
+
     const poolData = { UserPoolId: 'ap-south-1_FLoW0sfGn', ClientId: '4hl64f0ercj7ka7rr7epfjiioc' };
     const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
     let logged;
@@ -145,7 +154,7 @@
       return await res.json();
     }
 
-    // Form handlers
+    // Handlers
     document.getElementById('attendanceForm')?.addEventListener('submit', async e=>{
       e.preventDefault(); const f=e.target;
       alert(JSON.stringify(await postJSON(endpoints.markAttendance,{ employeeId:f.employeeId.value, status:f.status.value }))); f.reset();
@@ -196,29 +205,27 @@
       try {
         const arr = await postJSON(endpoints.listLeave, {});
         list.innerHTML = arr.map(x=>`<div class="p-2 border mb-2"><p><b>${x.employeeId}</b>: ${x.comment}</p><button onclick="approve('${x.employeeId}','${x.leaveId}')" class="bg-red-500 text-white px-2 py-1 rounded">Approve</button></div>`).join('');
-      } catch { list.innerText='Error loading leave requests'; }
+      } catch { list.innerText='Error loading leaverequests'; }
     }
     async function fetchPayrollList() {
-      const div = document.getElementById('payroll-links');
+      const div=document.getElementById('payroll-links');
       try {
-        const arr = await postJSON(endpoints.listPayroll, { employeeId: logged.emp });
-        div.innerHTML = arr.map(x=>`<a href="${x.downloadUrl}" target="_blank" class="block underline text-blue-600">${x.fileName}</a>`).join('');
+        const arr=await postJSON(endpoints.listPayroll,{ employeeId:logged.emp });
+        div.innerHTML=arr.map(x=>`<a href="${x.downloadUrl}" target="_blank" class="block underline text-blue-600">${x.fileName}</a>`).join('');
       } catch { div.innerText='Error loading payroll'; }
     }
     async function fetchPerformanceList() {
-      const cnt = document.getElementById('performance-content');
+      const cnt=document.getElementById('performance-content');
       try {
-        const arr = await postJSON(endpoints.listReview, { employeeId: logged.emp });
-        cnt.innerHTML = arr.map(r=>`<p>${r.rating} / 5 — ${r.feedback}</p>`).join('');
+        const arr=await postJSON(endpoints.listReview,{ employeeId:logged.emp });
+        cnt.innerHTML=arr.map(r=>`<p>${r.rating} /5 — ${r.feedback}</p>`).join('');
       } catch { cnt.innerText='Error loading performance'; }
     }
-    function approve(emp, lid) {
-      postJSON(endpoints.approveLeave, { employeeId: emp, leaveId: lid }).then(r=>alert(JSON.stringify(r)));
-    }
+    function approve(emp,lid){ postJSON(endpoints.approveLeave,{ employeeId:emp, leaveId:lid }).then(r=>alert(JSON.stringify(r))); }
 
-    // Wrap performance into dashboard init
-    const orig = setupDashboard;
-    setupDashboard = () => { orig(); renderPerformanceSection(); };
+    // finalize performance loading
+    const oldSetup=setupDashboard;
+    setupDashboard=()=>{ oldSetup(); renderPerformanceSection(); };
   </script>
 </body>
 </html>
